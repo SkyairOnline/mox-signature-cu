@@ -5,7 +5,7 @@
 """
 
 from snekmate.utils import merkle_proof_verification
-from snekmate.utils import eip712_domain_seperator as eip712
+from snekmate.utils import eip712_domain_separator as eip712
 from snekmate.utils import ecdsa
 from ethereum.ercs import IERC20
 
@@ -17,11 +17,11 @@ struct AirdropClaim:
 
 # Immutables
 MERKLE_ROOT: public(immutable(bytes32))
-AIRDROP_TOKEN: public(immutable(address))
+AIRDROP_TOKEN: public(immutable(IERC20))
 
 # Constants
 PROFF_MAX_LENGTH: constant(uint8) = max_value(uint8) # 255
-MESSAHE_TYPEHASH: constant(bytes32) = keccak256(
+MESSAGE_TYPEHASH: constant(bytes32) = keccak256(
     "AirdropClaim(address account,uint256 amount)"
 )
 EIP712_NAME: constant(String[50]) = "Merkle Airdrop"
@@ -72,13 +72,13 @@ def _is_valid_signature(account: address, message_hash: bytes32, v: uint8, r: by
     v_u: uint256 = convert(v, uint256)
     r_u: uint256 = convert(r, uint256)
     s_u: uint256 = convert(s, uint256)
-    actual_signer: address = ecdsa.__try_recover_vrs(message_hash, v_u, r_u, s_u)
+    actual_signer: address = ecdsa._try_recover_vrs(message_hash, v_u, r_u, s_u)
     return actual_signer == account
 
 @internal
 def _get_message_hash(account: address, amount: uint256) -> bytes32:
     return eip712._hash_typed_data_v4(
-        keccak256(abi_encode(MESSAHE_TYPEHASH, AirdropClaim(
+        keccak256(abi_encode(MESSAGE_TYPEHASH, AirdropClaim(
             account=account,
             amount=amount
         ))),
