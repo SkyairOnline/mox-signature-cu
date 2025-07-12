@@ -53,7 +53,7 @@ def claim(
     """
     Allow users to claim their airdrop tokens.
     """
-    assert not self.has_claimed[account] == False, "Merkle Airdrop: Account has already claimed"
+    assert not self.has_claimed[account], "Merkle Airdrop: Account has already claimed"
 
     message_hash: bytes32 = self._get_message_hash(account, amount)
     assert self._is_valid_signature(account, message_hash, v, r, s), "Merkle Airdrop: Invalid signature"
@@ -67,6 +67,11 @@ def claim(
     success: bool = extcall AIRDROP_TOKEN.transfer(account, amount)
     assert success, "Merkle Airdrop: Transfer failed"
 
+@external
+@view
+def get_message_hash(account: address, amount: uint256) -> bytes32:
+    return self._get_message_hash(account, amount)
+
 @internal
 def _is_valid_signature(account: address, message_hash: bytes32, v: uint8, r: bytes32, s: bytes32) -> bool:
     v_u: uint256 = convert(v, uint256)
@@ -76,6 +81,7 @@ def _is_valid_signature(account: address, message_hash: bytes32, v: uint8, r: by
     return actual_signer == account
 
 @internal
+@view
 def _get_message_hash(account: address, amount: uint256) -> bytes32:
     return eip712._hash_typed_data_v4(
         keccak256(abi_encode(MESSAGE_TYPEHASH, AirdropClaim(
